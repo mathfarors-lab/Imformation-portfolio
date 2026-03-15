@@ -1158,45 +1158,53 @@
     <!-- ======================= -->
     <script>
       /**
-       * 🔒 RUMDUOL EDITION - USER PROFILE SCRIPT (SECURE V3.1)
-       * សម្រាប់បង្ហាញព័ត៌មានសាធារណៈរបស់អតិថិជនម្នាក់ៗ
+       * 🌐 RUMDUOL EDITION - PUBLIC PROFILE SCRIPT (SECURE V4.0)
+       * សម្រាប់បង្ហាញព័ត៌មានសាធារណៈរបស់អតិថិជនម្នាក់ៗ (Frontend - user.html)
        */
 
       document.addEventListener("DOMContentLoaded", () => {
+        // ==========================================
         // ១. ការកំណត់ (CONFIGURATION)
+        // ==========================================
         const CONFIG = {
-          // ត្រូវប្រាកដថា URL នេះជា Link Web App របស់អ្នក
+          // 🔗 URL Web App ថ្មីរបស់បង (ត្រូវប្រាកដថាអត់មានដកឃ្លា)
           apiURL:
-            "https://script.google.com/macros/s/AKfycbwAUxfLefYtpCpoIYCddF6F6UPNLoooMul4GqmjW7YD3vo3wET479HAVpbiwJbXRjjMdw/exec",
+            "https://script.google.com/macros/s/AKfycbxEvEMXaXtTPYyPZHZqgBAbJ_53dYWjSKJCdgjxpJZf2mFZ-FgGzDUTQAGLrJz_h2U1sQ/exec",
           qrApi:
             "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=",
-          defaultProfile: "./image/profile.png",
-          loaderDelay: 800,
+          defaultProfile:
+            "https://via.placeholder.com/300x300.png?text=No+Profile",
+          loaderDelay: 800, // ពេលវេលាបង្ហាញ Loader មុនចេញទិន្នន័យ (0.8 វិនាទី)
         };
 
+        // ទាញយក ID ពី Link (ឧទាហរណ៍: user.html?id=RD-XXXX)
         const userId = new URLSearchParams(window.location.search).get("id");
 
         if (!userId) {
-          showError("សូមបញ្ជាក់ ID របស់ម្ចាស់ប័ណ្ណ! (?id=...)");
+          showError("⚠️ សូមបញ្ជាក់ ID របស់ម្ចាស់ប័ណ្ណ! (ឧទាហរណ៍: ?id=RD-XXXX)");
           return;
         }
 
-        // --- ២. មុខងារជំនួយ (UTILITIES) ---
+        // ==========================================
+        // ២. មុខងារជំនួយ (UTILITIES & HELPERS)
+        // ==========================================
 
-        // បើក/បិទ ផ្ទាំង Modal (Menu, QR)
+        // បើក/បិទ ផ្ទាំង Modal (Menu, QR) ជាមួយចលនា (Animation)
         const toggleModal = (id, show) => {
           const el = document.getElementById(id);
           if (!el) return;
           if (show) {
             el.classList.replace("modal-hidden", "modal-visible");
-            if (id === "modal-qr")
+            if (id === "modal-qr") {
               setTimeout(
                 () => el.querySelector("div")?.classList.add("scale-100"),
                 10,
               );
+            }
           } else {
-            if (id === "modal-qr")
+            if (id === "modal-qr") {
               el.querySelector("div")?.classList.remove("scale-100");
+            }
             setTimeout(
               () => el.classList.replace("modal-visible", "modal-hidden"),
               150,
@@ -1204,7 +1212,7 @@
           }
         };
 
-        // បិទ Loader និងបង្ហាញ Content
+        // បិទ Loader និងបង្ហាញ Content ពេញលេញ
         const finalizeUI = () => {
           setTimeout(() => {
             document.body.classList.add("content-ready");
@@ -1214,10 +1222,11 @@
           }, CONFIG.loaderDelay);
         };
 
-        // បញ្ចូលទិន្នន័យទៅក្នុង Element និងលាក់ស្វ័យប្រវត្តិកុំឱ្យទទេ
+        // បញ្ចូលទិន្នន័យទៅក្នុង UI ឆ្លាតវៃ (លាក់ប៊ូតុងបើគ្មានទិន្នន័យ)
         const bindData = (id, value, prefix = "", isImage = false) => {
           const el = document.getElementById(id);
           if (!el) return;
+
           const val =
             value && value !== "undefined" && value !== "null"
               ? String(value).trim()
@@ -1225,29 +1234,39 @@
 
           if (val !== "") {
             if (isImage) {
-              el.src = val; // គាំទ្រទាំង Base64 និង URL
+              el.src = val; // គាំទ្រទាំង Base64 និង Google Drive URL
             } else {
+              // លុបចន្លោះទទេ (Spaces) សម្រាប់លេខទូរស័ព្ទ និង App Chat ដើម្បីកុំឱ្យ Error Link
+              let cleanVal = val;
+              if (
+                prefix === "tel:" ||
+                prefix === "https://wa.me/" ||
+                prefix === "https://t.me/"
+              ) {
+                cleanVal = val.replace(/\s+/g, "");
+              }
+
               // បង្កើត Link ត្រឹមត្រូវ
-              let finalLink = val;
+              let finalLink = cleanVal;
               if (
                 prefix &&
-                !val.startsWith("http") &&
-                !val.startsWith("mailto:") &&
-                !val.startsWith("tel:")
+                !cleanVal.startsWith("http") &&
+                !cleanVal.startsWith("mailto:") &&
+                !cleanVal.startsWith("tel:")
               ) {
-                finalLink = prefix + val;
+                finalLink = prefix + cleanVal;
               }
               el.href = finalLink;
 
-              // បង្ហាញលេខទូរស័ព្ទក្នុង Label ក្រោម Icon Contact
+              // បង្ហាញលេខទូរស័ព្ទទី១ ក្នុងអត្ថបទខាងក្រោម Icon Contact
               const subText = el.querySelector("span:last-child");
               if (subText && id === "link-phone") {
-                subText.innerText = val.split(",")[0]; // បង្ហាញតែលេខទី១
+                subText.innerText = val.split(",")[0].trim();
               }
             }
-            el.style.display = id.includes("link-") ? "flex" : "block";
+            el.style.display = id.includes("link-") ? "flex" : "block"; // បង្ហាញ Element
           } else {
-            el.style.display = "none";
+            el.style.display = "none"; // លាក់ Element នោះចោលបើសិនជាគ្មានទិន្នន័យ
           }
         };
 
@@ -1261,11 +1280,12 @@
           }
         }
 
-        // --- ៣. ការទាញទិន្នន័យ (FETCH PUBLIC DATA) ---
-
+        // ==========================================
+        // ៣. ការទាញទិន្នន័យ (FETCH PUBLIC DATA)
+        // ==========================================
         async function init() {
           try {
-            // 🛡️ សុវត្ថិភាព៖ ប្រើ action=getPublicUser ដើម្បីទាញយកតែទិន្នន័យចាំបាច់ (មិនត្រូវការ Password)
+            // 🛡️ សុវត្ថិភាព៖ ប្រើ getPublicUser គឺទាញយកបានតែទិន្នន័យសាធារណៈប៉ុណ្ណោះ
             const fetchUrl = `${CONFIG.apiURL}?action=getPublicUser&id=${encodeURIComponent(userId)}`;
 
             const response = await fetch(fetchUrl);
@@ -1280,26 +1300,28 @@
             }
           } catch (err) {
             console.error(err);
-            showError("CONNECTION ERROR! សូមពិនិត្យមើលអ៊ីនធឺណិតរបស់អ្នក។");
+            showError("បរាជ័យក្នុងការតភ្ជាប់! សូមពិនិត្យមើលអ៊ីនធឺណិតរបស់អ្នក។");
           }
         }
 
-        // --- ៤. ការបង្ហាញទិន្នន័យលើអេក្រង់ (RENDERING) ---
-
+        // ==========================================
+        // ៤. ការចាក់ទិន្នន័យទៅលើអេក្រង់ (RENDERING)
+        // ==========================================
         function renderUser(user) {
           const currentUrl = window.location.href;
 
-          // បំពេញឈ្មោះ និងតួនាទី
+          // ៤.១ បំពេញឈ្មោះ និងតួនាទី
           document.getElementById("user-name").innerText = user.name || "";
           document.getElementById("user-title").innerText = user.title || "";
 
-          // រូបភាព Profile & Logo
+          // ៤.២ រូបភាព Profile & Logo
           bindData(
             "user-img",
             user.profile_img || CONFIG.defaultProfile,
             "",
             true,
           );
+
           const logo = document.getElementById("company-logo");
           if (logo) {
             if (user.logo_img && user.logo_img !== "") {
@@ -1310,11 +1332,25 @@
             }
           }
 
-          // លេខទូរស័ព្ទ (យកលេខទី១ មកបង្ហាញលើប៊ូតុង)
-          const phoneList = user.phones ? String(user.phones).split(",") : [];
-          bindData("link-phone", phoneList[0] || "", "tel:");
+          // ៤.៣ ប្រព័ន្ធចម្រាញ់លេខទូរស័ព្ទ (Phone Array Filtering)
+          // code.gs អាចនឹងបញ្ជូនមកបែបនេះ "0123, 0112, , 0998" (បើមាន Column ទំនេរ)
+          // យើងត្រូវកាត់វាចេញ និងលុបចន្លោះទទេចោល ដើម្បីកុំឱ្យ Error ពេលចុច
+          let phoneList = [];
+          if (user.phones) {
+            phoneList = String(user.phones)
+              .split(",")
+              .map((p) => p.trim())
+              .filter((p) => p !== ""); // លុប Array ណាដែលទទេចោល
+          }
 
-          // ប៊ូតុងសង្គមផ្សេងៗ
+          // ដាក់លេខទូរស័ព្ទទី១ ទៅកាន់ប៊ូតុង Contact សំខាន់
+          bindData(
+            "link-phone",
+            phoneList.length > 0 ? phoneList[0] : "",
+            "tel:",
+          );
+
+          // ៤.៤ ប៊ូតុងសង្គមផ្សេងៗ (Social Links)
           bindData("link-fb", user.facebook);
           bindData("link-tg", user.telegram, "https://t.me/");
           bindData("link-wa", user.whatsapp, "https://wa.me/");
@@ -1323,32 +1359,32 @@
           bindData("link-web", user.website);
           bindData("link-linkin", user.linkedin);
 
-          // បង្កើត QR Code សម្រាប់ Link នេះផ្ទាល់
+          // ៤.៥ បង្កើត QR Code សម្រាប់ Link នេះផ្ទាល់
           const qrImg = document.getElementById("qr-image");
           const qrText = document.getElementById("qr-link-text");
           if (qrImg) qrImg.src = CONFIG.qrApi + encodeURIComponent(currentUrl);
           if (qrText) qrText.innerText = currentUrl;
 
-          // មុខងារ Save Contact (VCF) - លម្អិតបំផុត
+          // ៤.៦ មុខងារ Save Contact (បង្កើត File VCF លម្អិត)
           document.getElementById("save-contact-btn").onclick = () => {
             let vcf = `BEGIN:VCARD\nVERSION:3.0\n`;
             const fName = user.vcf_first || user.name || "Contact";
             const lName = user.vcf_last || "";
+
             vcf += `N:${lName};${fName};;;\nFN:${fName} ${lName}\n`;
             if (user.vcf_org) vcf += `ORG:${user.vcf_org}\n`;
             if (user.title) vcf += `TITLE:${user.title}\n`;
 
-            // បញ្ចូលរាល់លេខទូរស័ព្ទទាំងអស់ (រហូតដល់ ៥ ខ្សែ)
+            // បញ្ចូលរាល់លេខទូរស័ព្ទទាំងអស់ដែលមានពិតប្រាកដ
             phoneList.forEach((p, i) => {
-              if (p.trim() !== "") {
-                vcf += `TEL;TYPE=${i === 0 ? "CELL" : "WORK"}:${p.trim()}\n`;
-              }
+              vcf += `TEL;TYPE=${i === 0 ? "CELL" : "WORK"}:${p.replace(/\s+/g, "")}\n`;
             });
 
             if (user.email) vcf += `EMAIL:${user.email}\n`;
             if (user.website) vcf += `URL:${user.website}\n`;
             vcf += `END:VCARD`;
 
+            // ទាញយក VCF File
             const blob = new Blob([vcf], { type: "text/vcard" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
@@ -1356,25 +1392,28 @@
             a.click();
           };
 
-          // មុខងារ Share Card
+          // ៤.៧ មុខងារ Share Card (Share Link ទៅកាន់ App ផ្សេងៗ)
           const shareBtn = document.getElementById("nav-share");
           if (shareBtn) {
             shareBtn.onclick = async () => {
-              toggleModal("modal-menu", false);
+              toggleModal("modal-menu", false); // បិទ Menu សិន
               if (navigator.share) {
                 try {
                   await navigator.share({ title: user.name, url: currentUrl });
                 } catch (e) {
-                  console.log("Share cancelled");
+                  console.log("Share cancelled or failed");
                 }
               } else {
+                // បើកុំព្យូទ័រមិនគាំទ្រ Share API គឺវា Copy Link ទុក
                 navigator.clipboard.writeText(currentUrl);
-                alert("Link ត្រូវបានចម្លងទុក! (Copied)");
+                alert("Link ត្រូវបានចម្លងទុក! (Copied to Clipboard)");
               }
             };
           }
 
-          // --- ៥. កំណត់សកម្មភាពប៊ូតុង Modals ---
+          // ==========================================
+          // ៥. កំណត់សកម្មភាពប៊ូតុង Modals (EVENT LISTENERS)
+          // ==========================================
           const actions = {
             "menu-btn": () => toggleModal("modal-menu", true),
             "close-menu-btn": () => toggleModal("modal-menu", false),
@@ -1391,21 +1430,25 @@
             },
           };
 
+          // ចង Event ទៅប៊ូតុងនីមួយៗ
           Object.keys(actions).forEach((id) => {
             const btn = document.getElementById(id);
             if (btn) btn.onclick = actions[id];
           });
 
-          // បិទ QR modal ពេលចុចលើផ្ទៃខាងក្រោយ
+          // បិទ QR modal ពេលចុចលើផ្ទៃខាងក្រោយពណ៌ខ្មៅ
           const modalQr = document.getElementById("modal-qr");
-          if (modalQr)
+          if (modalQr) {
             modalQr.onclick = (e) => {
               if (e.target === modalQr) toggleModal("modal-qr", false);
             };
+          }
 
+          // ចប់ការរៀបចំ បិទ Loader និងបង្ហាញ UI
           finalizeUI();
         }
 
+        // ចាប់ផ្តើមដំណើរការកូដ
         init();
       });
     </script>
