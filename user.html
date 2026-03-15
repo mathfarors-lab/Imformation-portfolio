@@ -1158,15 +1158,16 @@
     <!-- ======================= -->
     <script>
       /**
-       * RUMDUOL EDITION - INDEX SCRIPT (SECURE & SYNCED)
-       * Connects with Secure Admin Backend
+       * 🔒 RUMDUOL EDITION - USER PROFILE SCRIPT (SECURE V3.1)
+       * សម្រាប់បង្ហាញព័ត៌មានសាធារណៈរបស់អតិថិជនម្នាក់ៗ
        */
 
       document.addEventListener("DOMContentLoaded", () => {
-        // --- ១. ការកំណត់ (CONFIGURATION) ---
+        // ១. ការកំណត់ (CONFIGURATION)
         const CONFIG = {
+          // ត្រូវប្រាកដថា URL នេះជា Link Web App របស់អ្នក
           apiURL:
-            "https://script.google.com/macros/s/AKfycbwACwHK7yV5LlIWGgH2tfFL5x7JusbLguyMBhzgmHCIqFBU0dR8fq5DymAnjLGd_b2hVQ/exec",
+            "https://script.google.com/macros/s/AKfycbwAUxfLefYtpCpoIYCddF6F6UPNLoooMul4GqmjW7YD3vo3wET479HAVpbiwJbXRjjMdw/exec",
           qrApi:
             "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=",
           defaultProfile: "./image/profile.png",
@@ -1174,16 +1175,15 @@
         };
 
         const userId = new URLSearchParams(window.location.search).get("id");
-        const isLocal =
-          window.location.hostname === "127.0.0.1" ||
-          window.location.hostname === "localhost";
 
         if (!userId) {
-          showError("ID Required! សូមប្រើ Link ដែលមាន ?id=...");
+          showError("សូមបញ្ជាក់ ID របស់ម្ចាស់ប័ណ្ណ! (?id=...)");
           return;
         }
 
         // --- ២. មុខងារជំនួយ (UTILITIES) ---
+
+        // បើក/បិទ ផ្ទាំង Modal (Menu, QR)
         const toggleModal = (id, show) => {
           const el = document.getElementById(id);
           if (!el) return;
@@ -1204,16 +1204,17 @@
           }
         };
 
+        // បិទ Loader និងបង្ហាញ Content
         const finalizeUI = () => {
           setTimeout(() => {
             document.body.classList.add("content-ready");
-            setTimeout(
-              () => document.getElementById("main-loader")?.remove(),
-              1000,
-            );
+            const loader = document.getElementById("main-loader");
+            if (loader) loader.style.opacity = "0";
+            setTimeout(() => loader?.remove(), 500);
           }, CONFIG.loaderDelay);
         };
 
+        // បញ្ចូលទិន្នន័យទៅក្នុង Element និងលាក់ស្វ័យប្រវត្តិកុំឱ្យទទេ
         const bindData = (id, value, prefix = "", isImage = false) => {
           const el = document.getElementById(id);
           if (!el) return;
@@ -1224,8 +1225,9 @@
 
           if (val !== "") {
             if (isImage) {
-              el.src = val;
+              el.src = val; // គាំទ្រទាំង Base64 និង URL
             } else {
+              // បង្កើត Link ត្រឹមត្រូវ
               let finalLink = val;
               if (
                 prefix &&
@@ -1236,9 +1238,11 @@
                 finalLink = prefix + val;
               }
               el.href = finalLink;
+
+              // បង្ហាញលេខទូរស័ព្ទក្នុង Label ក្រោម Icon Contact
               const subText = el.querySelector("span:last-child");
               if (subText && id === "link-phone") {
-                subText.innerText = val.split(",")[0];
+                subText.innerText = val.split(",")[0]; // បង្ហាញតែលេខទី១
               }
             }
             el.style.display = id.includes("link-") ? "flex" : "block";
@@ -1257,10 +1261,11 @@
           }
         }
 
-        // --- ៣. ការទាញទិន្នន័យ (DATA FETCHING - UPDATED FOR SECURITY) ---
+        // --- ៣. ការទាញទិន្នន័យ (FETCH PUBLIC DATA) ---
+
         async function init() {
           try {
-            // ប្រើ action=getPublicUser ដើម្បីទាញទិន្នន័យតាម ID (មិនត្រូវការ Password)
+            // 🛡️ សុវត្ថិភាព៖ ប្រើ action=getPublicUser ដើម្បីទាញយកតែទិន្នន័យចាំបាច់ (មិនត្រូវការ Password)
             const fetchUrl = `${CONFIG.apiURL}?action=getPublicUser&id=${encodeURIComponent(userId)}`;
 
             const response = await fetch(fetchUrl);
@@ -1271,21 +1276,24 @@
             if (user && user.status !== "error") {
               renderUser(user);
             } else {
-              showError("រកមិនឃើញ ID: " + userId);
+              showError("រកមិនឃើញព័ត៌មានសម្រាប់ ID: " + userId);
             }
           } catch (err) {
             console.error(err);
-            showError("CONNECTION ERROR! សូមពិនិត្យមើលការតភ្ជាប់អ៊ីនធឺណិត។");
+            showError("CONNECTION ERROR! សូមពិនិត្យមើលអ៊ីនធឺណិតរបស់អ្នក។");
           }
         }
 
         // --- ៤. ការបង្ហាញទិន្នន័យលើអេក្រង់ (RENDERING) ---
+
         function renderUser(user) {
           const currentUrl = window.location.href;
 
+          // បំពេញឈ្មោះ និងតួនាទី
           document.getElementById("user-name").innerText = user.name || "";
           document.getElementById("user-title").innerText = user.title || "";
 
+          // រូបភាព Profile & Logo
           bindData(
             "user-img",
             user.profile_img || CONFIG.defaultProfile,
@@ -1302,9 +1310,11 @@
             }
           }
 
+          // លេខទូរស័ព្ទ (យកលេខទី១ មកបង្ហាញលើប៊ូតុង)
           const phoneList = user.phones ? String(user.phones).split(",") : [];
           bindData("link-phone", phoneList[0] || "", "tel:");
 
+          // ប៊ូតុងសង្គមផ្សេងៗ
           bindData("link-fb", user.facebook);
           bindData("link-tg", user.telegram, "https://t.me/");
           bindData("link-wa", user.whatsapp, "https://wa.me/");
@@ -1313,11 +1323,13 @@
           bindData("link-web", user.website);
           bindData("link-linkin", user.linkedin);
 
+          // បង្កើត QR Code សម្រាប់ Link នេះផ្ទាល់
           const qrImg = document.getElementById("qr-image");
           const qrText = document.getElementById("qr-link-text");
           if (qrImg) qrImg.src = CONFIG.qrApi + encodeURIComponent(currentUrl);
           if (qrText) qrText.innerText = currentUrl;
 
+          // មុខងារ Save Contact (VCF) - លម្អិតបំផុត
           document.getElementById("save-contact-btn").onclick = () => {
             let vcf = `BEGIN:VCARD\nVERSION:3.0\n`;
             const fName = user.vcf_first || user.name || "Contact";
@@ -1326,6 +1338,7 @@
             if (user.vcf_org) vcf += `ORG:${user.vcf_org}\n`;
             if (user.title) vcf += `TITLE:${user.title}\n`;
 
+            // បញ្ចូលរាល់លេខទូរស័ព្ទទាំងអស់ (រហូតដល់ ៥ ខ្សែ)
             phoneList.forEach((p, i) => {
               if (p.trim() !== "") {
                 vcf += `TEL;TYPE=${i === 0 ? "CELL" : "WORK"}:${p.trim()}\n`;
@@ -1339,24 +1352,29 @@
             const blob = new Blob([vcf], { type: "text/vcard" });
             const a = document.createElement("a");
             a.href = URL.createObjectURL(blob);
-            a.download = `${fName}.vcf`;
+            a.download = `${fName.replace(/\s+/g, "_")}.vcf`;
             a.click();
           };
 
-          document.getElementById("nav-share").onclick = async () => {
-            toggleModal("modal-menu", false);
-            if (navigator.share) {
-              try {
-                await navigator.share({ title: user.name, url: currentUrl });
-              } catch (e) {
-                console.log("Share cancelled");
+          // មុខងារ Share Card
+          const shareBtn = document.getElementById("nav-share");
+          if (shareBtn) {
+            shareBtn.onclick = async () => {
+              toggleModal("modal-menu", false);
+              if (navigator.share) {
+                try {
+                  await navigator.share({ title: user.name, url: currentUrl });
+                } catch (e) {
+                  console.log("Share cancelled");
+                }
+              } else {
+                navigator.clipboard.writeText(currentUrl);
+                alert("Link ត្រូវបានចម្លងទុក! (Copied)");
               }
-            } else {
-              navigator.clipboard.writeText(currentUrl);
-              alert("Link Copied!");
-            }
-          };
+            };
+          }
 
+          // --- ៥. កំណត់សកម្មភាពប៊ូតុង Modals ---
           const actions = {
             "menu-btn": () => toggleModal("modal-menu", true),
             "close-menu-btn": () => toggleModal("modal-menu", false),
@@ -1378,6 +1396,7 @@
             if (btn) btn.onclick = actions[id];
           });
 
+          // បិទ QR modal ពេលចុចលើផ្ទៃខាងក្រោយ
           const modalQr = document.getElementById("modal-qr");
           if (modalQr)
             modalQr.onclick = (e) => {
